@@ -1,11 +1,36 @@
-from socket import socket, AF_INET, SOCK_DGRAM
-PORT = 50000
-MAGIC = "fna349fn"  # to make sure we don't confuse or get confused by other programs
-s = socket(AF_INET, SOCK_DGRAM)  # create UDP socket
-s.bind(('', PORT))
+# from socket import socket, AF_INET, SOCK_DGRAM
+# PORT = 50000
+# MAGIC = "fna349fn"  # to make sure we don't confuse or get confused by other programs
+# s = socket(AF_INET, SOCK_DGRAM)  # create UDP socket
+# s.bind(('', PORT))
 
-while 1:
-    data, addr = s.recvfrom(1024)  # wait for a packet
-    data = data.decode()
-    if data.startswith(MAGIC):
-        print("got service announcement from", data[len(MAGIC):])
+# while 1:
+#     data, addr = s.recvfrom(1024)  # wait for a packet
+#     data = data.decode()
+#     if data.startswith(MAGIC):
+#         print("got service announcement from", data[len(MAGIC):])
+
+
+from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
+
+
+class MyListener(ServiceListener):
+
+    def update_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+        print(f"Service {name} updated")
+
+    def remove_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+        print(f"Service {name} removed")
+
+    def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+        info = zc.get_service_info(type_, name)
+        print(f"Service {name} added, service info: {info}")
+
+
+zeroconf = Zeroconf()
+listener = MyListener()
+browser = ServiceBrowser(zeroconf, "_http._tcp.local.", listener)
+try:
+    input("Press enter to exit...\n\n")
+finally:
+    zeroconf.close()
